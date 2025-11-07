@@ -104,7 +104,7 @@ fn create_app_subdirectories(agnostic_dir: &PathBuf) -> InitResult<()> {
     use super::super::fs::filesystem::ensure_dir_exists;
 
     // Create common subdirectories
-    let subdirs = ["bin"];
+    let subdirs = ["bin", "user"];
 
     for subdir in &subdirs {
         let dir_path = agnostic_dir.join(subdir);
@@ -260,7 +260,7 @@ mod tests {
         assert!(config.agnostic_dir.is_dir());
 
         // Check that subdirectories were created
-        let subdirs = ["bin"];
+        let subdirs = ["bin", "user"];
         for subdir in &subdirs {
             let dir_path = config.agnostic_dir.join(subdir);
             assert!(dir_path.exists(), "Subdirectory {} should exist", subdir);
