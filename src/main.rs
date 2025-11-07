@@ -3,14 +3,17 @@ use clap::{Parser, Subcommand};
 mod commands;
 mod utils;
 use commands::{
-    PipelineAction, ProjectAction, StatusAction, handle_pipeline_command, handle_project_command,
-    handle_status_command,
+    PipelineAction, ProjectAction, StatusAction, UserAction, handle_pipeline_command,
+    handle_project_command, handle_status_command,
 };
 use utils::app::{cleanup_app, initialize_app};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
+    #[arg(long, short = 'v', env = "VERBOSE")]
+    verbose: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -32,16 +35,21 @@ enum Commands {
         #[command(subcommand)]
         action: StatusAction,
     },
+
+    User {
+        #[command(subcommand)]
+        action: UserAction,
+    },
 }
 
 #[tokio::main]
 async fn main() {
+    let args = Args::parse();
+
     // Initialize the application environment
     let config = match initialize_app().await {
         Ok(config) => {
-            if std::env::var("VERBOSE").is_ok()
-                || std::env::args().any(|arg| arg == "--verbose" || arg == "-v")
-            {
+            if args.verbose {
                 println!("Application initialized successfully");
                 println!("Working directory: {}", config.agnostic_dir.display());
             }
@@ -53,13 +61,12 @@ async fn main() {
         }
     };
 
-    let args = Args::parse();
-
     // Handle the command
     match args.command {
         Commands::Project { action } => handle_project_command(action).await,
         Commands::Pipeline { action } => handle_pipeline_command(action).await,
         Commands::Status { action } => handle_status_command(action, &config).await,
+        Commands::User { action } => action.handle(&config).await,
     };
 
     // Cleanup on exit
