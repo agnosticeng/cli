@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     error::Error,
     fs,
     path::Path,
@@ -55,7 +56,7 @@ impl AuthTokens {
 
     pub fn expires_at(&self) -> Result<SystemTime, AuthTokenError> {
         let token_data = insecure_decode::<IdTokenClaims>(&self.id_token)
-            .map_err(|e| AuthTokenError::DecodeFailed(e))?;
+            .map_err(AuthTokenError::DecodeFailed)?;
         let claims = token_data.claims;
         let exp = claims.exp.ok_or(AuthTokenError::AlreadyExpired)?;
         let expiration = UNIX_EPOCH + Duration::from_secs(exp);
@@ -91,9 +92,12 @@ impl AuthTokens {
             .as_ref()
             .ok_or(AuthTokenError::NoRefreshToken)?;
 
+        let mut body = HashMap::new();
+        body.insert("refresh_token", refresh_token);
+
         let response = client
             .post("https://app.agnostic.tech/api/refresh_token")
-            .form(&[("refresh_token", refresh_token)])
+            .json(&body)
             .send()
             .await?;
 

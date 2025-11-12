@@ -18,11 +18,11 @@ impl UserAction {
         };
 
         let client = Client::new();
-        ensure_valid_tokens(&config, &mut auth_tokens, &client).await?;
+        ensure_valid_tokens(config, &mut auth_tokens, &client).await?;
 
         let response = client
             .get("https://app.agnostic.tech/api/user")
-            .bearer_auth(&auth_tokens.id_token())
+            .bearer_auth(auth_tokens.id_token())
             .send()
             .await?;
 
