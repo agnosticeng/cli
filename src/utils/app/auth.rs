@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     error::Error,
     fs,
     path::Path,
@@ -91,9 +92,12 @@ impl AuthTokens {
             .as_ref()
             .ok_or(AuthTokenError::NoRefreshToken)?;
 
+        let mut body = HashMap::new();
+        body.insert("refresh_token", refresh_token);
+
         let response = client
             .post("https://app.agnostic.tech/api/refresh_token")
-            .form(&[("refresh_token", refresh_token)])
+            .json(&body)
             .send()
             .await?;
 
