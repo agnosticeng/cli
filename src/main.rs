@@ -3,8 +3,8 @@ use clap::{Parser, Subcommand};
 mod commands;
 mod utils;
 use commands::{
-    PipelineAction, ProjectAction, StatusAction, UserAction, handle_pipeline_command,
-    handle_project_command, handle_status_command,
+    PipelineAction, ProjectAction, SystemAction, UserAction, handle_pipeline_command,
+    handle_project_command,
 };
 use utils::app::{cleanup_app, initialize_app};
 
@@ -30,10 +30,10 @@ enum Commands {
         #[command(subcommand)]
         action: PipelineAction,
     },
-    /// Show status of binaries and system
-    Status {
+
+    System {
         #[command(subcommand)]
-        action: StatusAction,
+        action: SystemAction,
     },
 
     User {
@@ -52,8 +52,10 @@ async fn main() {
             if args.verbose {
                 println!("Application initialized successfully");
                 println!("Working directory: {}", config.agnostic_dir.display());
+                config.with_verbose()
+            } else {
+                config
             }
-            config
         }
         Err(e) => {
             eprintln!("Failed to initialize application: {}", e);
@@ -65,7 +67,7 @@ async fn main() {
     match args.command {
         Commands::Project { action } => handle_project_command(action).await,
         Commands::Pipeline { action } => handle_pipeline_command(action).await,
-        Commands::Status { action } => handle_status_command(action, &config).await,
+        Commands::System { action } => action.handle(&config).await,
         Commands::User { action } => action.handle(&config).await,
     };
 
