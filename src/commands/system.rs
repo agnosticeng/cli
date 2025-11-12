@@ -1,26 +1,25 @@
-//! Status command implementation
-//!
-//! This module provides functionality to check the status of installed binaries
-//! and other system information.
-
-use crate::utils::{AppConfig, get_binaries_status, get_binary_version_by_name};
-use clap::Subcommand;
 use std::fs;
 
-/// Status-related subcommands
+use clap::Subcommand;
+
+use crate::utils::{AppConfig, get_binaries_status, get_binary_version_by_name};
+
+/// System-related subcommands
 #[derive(Subcommand, Debug)]
-pub enum StatusAction {
-    /// Show status of all installed binaries
-    Binaries,
+pub enum SystemAction {
     /// Show overall system status
-    System,
+    Status,
 }
 
-/// Handle status commands
-pub async fn handle_status_command(action: StatusAction, config: &AppConfig) {
-    match action {
-        StatusAction::Binaries => show_binaries_status(config).await,
-        StatusAction::System => show_system_status(config).await,
+impl SystemAction {
+    pub async fn handle(self, config: &AppConfig) {
+        match self {
+            Self::Status => {
+                show_system_status(config).await;
+                println!();
+                show_binaries_status(config).await;
+            }
+        }
     }
 }
 
@@ -109,7 +108,7 @@ async fn show_system_status(config: &AppConfig) {
 
     // Subdirectories
     println!("Subdirectories");
-    let subdirs = ["bin"];
+    let subdirs = ["bin", "user"];
     for subdir in subdirs {
         let path = config.agnostic_dir.join(subdir);
         let exists = path.exists();
