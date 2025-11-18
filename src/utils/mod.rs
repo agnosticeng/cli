@@ -25,7 +25,9 @@ pub use net::{dl_unzip, download_file, download_to_temp_file};
 
 // Application utilities
 #[allow(unused_imports)]
-pub use app::{AppConfig, cleanup_app, get_agnostic_subdir, initialize_app};
+pub use app::{
+    AppConfig, AuthTokens, cleanup_app, ensure_valid_tokens, get_agnostic_subdir, initialize_app,
+};
 
 // Binary utilities
 #[allow(unused_imports)]
