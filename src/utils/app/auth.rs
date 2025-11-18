@@ -71,15 +71,6 @@ impl AuthTokens {
         self.token_type.to_lowercase() == "bearer"
     }
 
-    #[allow(dead_code)]
-    pub fn refresh_token(&self) -> Option<&str> {
-        let Some(refresh_token) = &self.refresh_token else {
-            return None;
-        };
-
-        Some(refresh_token)
-    }
-
     pub fn needs_refresh(&self, threshold: Duration) -> Result<bool, AuthTokenError> {
         let expires_at = self.expires_at()?;
         let now = SystemTime::now();
@@ -115,16 +106,25 @@ impl AuthTokens {
 /// check if needs refresh soon (5 min)
 pub async fn ensure_valid_tokens(
     config: &AppConfig,
-    tokens: &mut AuthTokens,
     client: &Client,
-) -> Result<(), AuthTokenError> {
+) -> Result<AuthTokens, AuthTokenError> {
+    let result = AuthTokens::load_from_config(config).map_err(move |e| {
+        if config.verbose {
+            eprintln!("{}", e);
+        }
+        AuthTokenError::NoAuthTokens
+    })?;
+
+    let mut tokens = result.ok_or(AuthTokenError::NoAuthTokens)?;
+
     if tokens.needs_refresh(Duration::from_secs(5 * 60))? {
         tokens.refresh(client).await?;
         tokens
             .save(config.agnostic_dir.join("user/auth.json"))
             .map_err(|e| AuthTokenError::InvalidResponse(e.to_string()))?;
     }
-    Ok(())
+
+    Ok(tokens)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -136,6 +136,8 @@ struct IdTokenClaims {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AuthTokenError {
+    #[error("Missing auth tokens")]
+    NoAuthTokens,
     #[error("Missing refresh token")]
     NoRefreshToken,
     #[error("JWT decode failed: {0}")]
