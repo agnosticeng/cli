@@ -8,6 +8,8 @@ use commands::{
 };
 use utils::app::{cleanup_app, initialize_app};
 
+use crate::commands::TeamAction;
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -34,6 +36,11 @@ enum Commands {
     System {
         #[command(subcommand)]
         action: SystemAction,
+    },
+
+    Team {
+        #[command(subcommand)]
+        action: TeamAction,
     },
 
     User {
@@ -68,6 +75,7 @@ async fn main() {
         Commands::Project { action } => handle_project_command(action).await,
         Commands::Pipeline { action } => handle_pipeline_command(action).await,
         Commands::System { action } => action.handle(&config).await,
+        Commands::Team { action } => action.handle(&config).await,
         Commands::User { action } => action.handle(&config).await,
     };
 
